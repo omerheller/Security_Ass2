@@ -21,6 +21,7 @@ public class Algorithms {
             if (block[i] >= 'a' && block[i] <= 'h') {
                 char c = block[i];
                 block[i] = key[c - 97];
+                System.out.println("I just turned a "+c+" to a "+key[c-97]);
             }
         }
         return block;
@@ -34,6 +35,7 @@ public class Algorithms {
                 while(key[dec]!=c)
                     dec++;
                 block[i] = (char) (97 + dec);
+                System.out.println("I just turned a "+c+" to a "+(char)(97+dec));
             }
         }
         return block;
