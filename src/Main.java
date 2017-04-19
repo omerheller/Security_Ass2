@@ -3,7 +3,9 @@ import com.swabunga.spell.event.SpellChecker;
 import java.io.*;
 import java.util.*;
 import java.util.function.Function;
+import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
@@ -13,60 +15,92 @@ import static java.util.stream.Collectors.groupingBy;
  */
 public class Main {
     public static void main(String[] args){
-        Base64.Encoder enc = Base64.getEncoder();
         long start_time = System.nanoTime();
-        List<char[]> blocks = readBlocks("test4.txt");
-        char[] IV = readIV("PartB/IV_short.txt");
+        List<byte[]> blocks = readBlocks("PartB/cipher.txt");
+        byte[] IV = readIV("PartB/IV_short.txt");
 
-        char[] key = readKey("PartB/key_short.txt");
-        //List<char[]> values = OpMode.CBC_Encrypt("sub",blocks,IV,key);
+        //byte[] key = readKey("key_example.txt");
+        //List<byte[]> values = OpMode.CBC_Encrypt("sub",blocks,IV,key);
         //System.out.println("finished encrypting");
         //EnglishCheck(values);
-        //writeToFile("test4.txt",values);
-        List<char[]> values = OpMode.CBC_Decrypt("sub",blocks,IV,key);
-        System.out.println("finished decrypting");
-        writeToFile("plain.txt",values);
-        //SpellChecker checker = TextOnlyAttack.makeChecker();
+        //writeToFile("test55.txt",values);
+        //List<byte[]> values = OpMode.CBC_Decrypt("sub",blocks,IV,key);
+        //System.out.println("finished decrypting");
+        //writeToFile("plain222.txt",values);
+        SpellChecker checker = TextOnlyAttack.makeChecker();
 
-        //for (char c : getKey(blocks,IV,checker)){
-        //    System.out.print(c);
-       // }
+
+        for (byte c : getKey(blocks,IV,checker)){
+            System.out.print((char)c);
+        }
         System.out.println();
-        System.out.println("finished decrypting");
-        System.out.println("RunTime: "+(System.nanoTime() - start_time)/1000000+"ms");
+        //System.out.println("finished decrypting");
+        System.out.println("RunTime: "+((System.nanoTime() - start_time)/1000000)/1000+"sec");
         //for(char[] b : values2)
         //System.out.print(new String(b));
 
 
     }
 
-    private static char[] getKey(List<char[]> blocks,char[] IV,SpellChecker checker){
-        Character[] keyBasic = new Character[]{'a','b','c','d','e','f','g','h'};
-        Character[] keyPermutation = new Character[8];
-        char[] key = new char[8];
-        char[] master_key = new char[8];
+    private static byte[] getKey(List<byte[]> blocks,byte[] IV,SpellChecker checker){
+        byte[] keyBasic = new byte[]{'a','b','c','d','e','f','g','h'};
+        byte[] keyPermutation = new byte[8];
+        byte[] key = new byte[8];
+        byte[] master_key = new byte[8];
         int maxWords = 0;
+
         Permutations iter = Permutations.create(keyBasic,keyPermutation);
         while(iter.next()){
             for(int i=0;i<key.length;i++)
-                key[i] = keyPermutation[i].charValue();
-            int end = blocks.size()>250 ? 250 : blocks.size();
-            List<char []> values3 = OpMode.CBC_Decrypt("sub",blocks.subList(0,end),IV,key);
-            int value = EnglishCheck(values3,checker);
+                key[i] = keyPermutation[i];
+            boolean flag = true;
+            for(int i=0;i<key.length;i++)
+                if(true)
+                    flag=false;
+            if(flag){
+                //System.out.println("checking right key now");
+            }
+            List<byte[]> sublist;
+            if(blocks.size()>500){
+                sublist = blocks.subList(blocks.size()/2,blocks.size()/2+200);
+            }
+            else{
+                sublist = blocks.subList(0,(blocks.size()>200) ? 200 : blocks.size());
+            }
+            //System.out.println("im going from "+blocks.size()/2+" to "+end);
+            List<byte []> values3 = OpMode.CBC_Decrypt("sub",sublist,IV,key);
+            int value = 0;
+            if(flag)
+                   value =  EnglishCheck(values3,checker,false);
+            else
+                value =  EnglishCheck(values3,checker,false);
             if(value>maxWords){
-                System.out.println("changed max words to "+value);
+                //System.out.println("changed max words to "+value);
                 maxWords = value;
                 for(int i=0;i<master_key.length;i++)
-                    master_key[i] = keyPermutation[i].charValue();
+                    master_key[i] = keyPermutation[i];
             }
         }
         return master_key;
     }
 
-    private static int EnglishCheck(List<char[]> blocks,SpellChecker checker) {
+    private static int EnglishCheck(List<byte[]> blocks,SpellChecker checker,boolean print) {
         String text = "";
+        byte[] data = new byte[1000];
+        int data_index=0;
         for(int i=0;i<100 && i<blocks.size();i++){
-            text += new String(blocks.get(i));
+            for(int j=0;j<10;j++){
+                data[data_index] = blocks.get(i)[j];
+                data_index++;
+            }
+        }
+
+        try {
+
+            text += new String(data,StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            System.out.println("got caught trying");
+            e.printStackTrace();
         }
 
         List<String> words = TextOnlyAttack.breakToWords(text);
@@ -74,11 +108,11 @@ public class Main {
                 words.stream().collect(groupingBy(Function.identity(), counting()));
         LinkedHashMap<String, Long> countByWordSorted = TextOnlyAttack.sortCollect(collect);
 
-        return TextOnlyAttack.checkWords(countByWordSorted,checker);
+        return TextOnlyAttack.checkWords(countByWordSorted,checker,print);
     }
 
 
-    public static char[] readKey(String keyfile){
+    public static byte[] readKey(String keyfile){
         char[] key = new char[8];
         try (BufferedReader br = new BufferedReader(new FileReader(keyfile))) {
 
@@ -93,18 +127,17 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return key;
+        return new String(key).getBytes();
     }
 
-    public static char[] readIV(String IVfile){
-        char[] IV = new char[10];
-        try (BufferedReader br = new BufferedReader(new FileReader(IVfile))) {
-
+    public static byte[] readIV(String IVfile){
+        byte[] IV = new byte[10];
+        try (RandomAccessFile br = new RandomAccessFile(IVfile, "r")) {
             int i=0;
 
             int r;
             while ((r = br.read()) != -1) {
-                IV[i] = (char) r;
+                IV[i] = (byte) r;
                 i++;
             }
 
@@ -114,22 +147,21 @@ public class Main {
         return IV;
     }
 
-    public static List<char[]> readBlocks(String file){
-        List<char[]> blocks = new ArrayList<>();
+    public static List<byte[]> readBlocks(String file){
+        List<byte[]> blocks = new ArrayList<>();
 
         File fileDir = new File(file);
-        try (BufferedReader br = new BufferedReader( new InputStreamReader(
-                new FileInputStream(fileDir), "UTF-8"))) {
-            char[] block = new char[10];
+        try (RandomAccessFile br = new RandomAccessFile(file, "r")) {
+            byte[] block = new byte[10];
             int r;
             while((r = br.read(block,0,10)) != -1){
                 if (r < 10){
                     for(int i=r;i<10;i++){
-                        block[i] = (char)0;
+                        block[i] = (byte)0;
                     }
                 }
                 blocks.add(block);
-                block = new char[10];
+                block = new byte[10];
             }
 
         } catch (IOException e) {
@@ -138,12 +170,12 @@ public class Main {
         return blocks;
     }
 
-    public static void writeToFile(String dest,List<char []> contents){
+    public static void writeToFile(String dest,List<byte []> contents){
 
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(dest))) {
+        try (RandomAccessFile bw = new RandomAccessFile(dest, "rw")) {
 
-            for(char[] content : contents)
-                bw.write(new String(content));
+            for(byte[] content : contents)
+                bw.write(content);
 
             // no need to close it.
             //bw.close();

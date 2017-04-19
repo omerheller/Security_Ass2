@@ -10,28 +10,22 @@ import java.util.List;
 public class OpMode {
 
 
-    public static List<char[]> CBC_Encrypt(String algo,List<char[]> blocks,char[] IV,char[] key){
+    public static List<byte[]> CBC_Encrypt(String algo,List<byte[]> blocks,byte[] IV,byte[] key){
         Algo algorithm = Algorithms.Algorithm(algo,"Encrypt");
-        List<char[]> blocksAfterOp = new LinkedList<>();
-        char[] xorArg = IV;
-        for(char[] block : blocks) {
+        List<byte[]> blocksAfterOp = new LinkedList<>();
+        byte[] xorArg = IV;
+        for(byte[] block : blocks) {
             byte[] out = new byte[block.length];
             for (int i = 0; i < block.length; i++) {
                 out[i] = (byte) (block[i] ^ IV[i]);
             }
-            char[] outDecode = base64Encode(out).toCharArray();
-            char[] blockAfterAlgo = algorithm.operation(key, outDecode);
+            byte[] blockAfterAlgo = algorithm.operation(key, out);
             IV = blockAfterAlgo;
             blocksAfterOp.add(blockAfterAlgo);
         }
         return blocksAfterOp;
     }
 
-    private static String base64Encode(byte[] bytes) {
-        Base64.Encoder enc = Base64.getEncoder();
-        return enc.encodeToString(bytes).replaceAll("\\s", "");
-
-    }
 
     private static byte[] base64Decode(String s) {
         try {
@@ -40,25 +34,24 @@ public class OpMode {
         } catch (Exception e) {throw new RuntimeException(e);}
     }
 
-    public static List<char[]> CBC_Decrypt(String algo,List<char[]> blocks,char[] IV,char[] key){
-        List<char[]> newBlocks = new ArrayList<>();
-        for(char[] block : blocks){
+    public static List<byte[]> CBC_Decrypt(String algo,List<byte[]> blocks,byte[] IV,byte[] key){
+        List<byte[]> newBlocks = new ArrayList<>();
+        for(byte[] block : blocks){
             newBlocks.add(Arrays.copyOf(block,block.length));
         }
         Algo algorithm = Algorithms.Algorithm(algo,"Decrypt");
-        List<char[]> blocksAfterOp = new LinkedList<>();
-        char[] new_IV;
-        for(char[] block : newBlocks) {
-            new_IV = new char[block.length];
+        List<byte[]> blocksAfterOp = new LinkedList<>();
+        byte[] new_IV;
+        for(byte[] block : newBlocks) {
+            new_IV = new byte[block.length];
             for(int i=0;i<block.length;i++){
                 new_IV[i] = block[i];
             }
-            char[] blockAfterAlgo = algorithm.operation(key, block);
-            byte[] out = base64Decode(new String(blockAfterAlgo));
-            char[] xorArg = IV;
+            byte[] blockAfterAlgo = algorithm.operation(key, block);
+            byte[] xorArg = IV;
 
-            for (int i = 0; i < out.length; i++) {
-                blockAfterAlgo[i] = (char) (out[i] ^ IV[i]);
+            for (int i = 0; i < blockAfterAlgo.length; i++) {
+                blockAfterAlgo[i] = (byte) (blockAfterAlgo[i] ^ IV[i]);
             }
             IV = new_IV;
             blocksAfterOp.add(blockAfterAlgo);

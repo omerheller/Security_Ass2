@@ -13,7 +13,9 @@ public class TextOnlyAttack {
 
     public static List<String> breakToWords(String text){
         List<String> words = new ArrayList<String>();
-            String[] splitted =  text.split("\\s+");
+        //System.out.println("Text Before Split: "+text);
+            text = text.replaceAll("[!?,._—]", " ");
+            String[] splitted =  text.split("[\\W+]");
             for(String split : splitted) {
                 words.add(split);
             }
@@ -34,17 +36,24 @@ public class TextOnlyAttack {
                 ));
     }
 
-    public static int checkWords(LinkedHashMap<String, Long> words,SpellChecker checker){
+    public static int checkWords(LinkedHashMap<String, Long> words,SpellChecker checker,boolean print){
         Set<String> strings = words.keySet();
         Iterator<String> iter = strings.iterator();
         int i=0;
         int correct_words = 0;
         while(iter.hasNext()) {
             String str = iter.next();
-            if (checker.isCorrect(str))
+            if(print)
+                System.out.print(str);
+            if (checker.isCorrect(str)) {
                 correct_words++;
-            else
-                System.out.print(str+" , ");
+                if (print)
+                    System.out.print("----TRUE");
+            }
+            if(print)
+                System.out.println();
+            //else
+                //System.out.print(str+" , ");
             i++;
         }
         //System.out.println("Correct Words: "+correct_words);

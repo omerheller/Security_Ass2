@@ -16,26 +16,26 @@ public class Algorithms {
 
     }
 
-    static Algo subEncrypt = (char[] key, char[] block) -> {
+    static Algo subEncrypt = (byte[] key, byte[] block) -> {
         for (int i = 0; i < block.length; i++) {
             if (block[i] >= 'a' && block[i] <= 'h') {
-                char c = block[i];
+                byte c = block[i];
                 block[i] = key[c - 97];
-                System.out.println("I just turned a "+c+" to a "+key[c-97]);
+                //System.out.println("I just turned a "+c+" to a "+key[c-97]);
             }
         }
         return block;
     };
 
-    static Algo subDecrypt = (char[] key, char[] block) -> {
+    static Algo subDecrypt = (byte[] key, byte[] block) -> {
         for (int i = 0; i < block.length; i++) {
             if (block[i] >= 'a' && block[i] <= 'h') {
-                char c = block[i];
+                byte c = block[i];
                 int dec = 0;
                 while(key[dec]!=c)
                     dec++;
-                block[i] = (char) (97 + dec);
-                System.out.println("I just turned a "+c+" to a "+(char)(97+dec));
+                block[i] = (byte) (97 + dec);
+               // System.out.println("I just turned a "+c+" to a "+(char)(97+dec));
             }
         }
         return block;

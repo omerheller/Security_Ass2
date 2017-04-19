@@ -31,15 +31,15 @@
  *
  * @param <T> the element type
  */
-public class Permutations<T> {
+public class Permutations{
 
-    private T[] in;
-    private T[] out;
+    private byte[] in;
+    private byte[] out;
     private int n, m;
     private int[] index;
     private boolean hasNext = true;
 
-    private Permutations(T[] in, T[] out, int m) {
+    private Permutations(byte[] in, byte[] out, int m) {
         this.n = in.length;
         this.m = m;
         if (n < m || m < 0) {
@@ -65,8 +65,8 @@ public class Permutations<T> {
      * @param out the target array
      * @return the generated permutations object
      */
-    public static <T> Permutations<T> create(T[] in, T[] out) {
-        return new Permutations<T>(in, out, in.length);
+    public static Permutations create(byte[] in, byte[] out) {
+        return new Permutations(in, out, in.length);
     }
 
     /**
@@ -78,8 +78,8 @@ public class Permutations<T> {
      * @param m the number of output elements to generate
      * @return the generated permutations object
      */
-    public static <T> Permutations<T> create(T[] in, T[] out, int m) {
-        return new Permutations<T>(in, out, m);
+    public static Permutations create(byte[] in, byte[] out, int m) {
+        return new Permutations(in, out, m);
     }
 
     /**
